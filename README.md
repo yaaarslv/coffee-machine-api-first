@@ -61,7 +61,7 @@ src/main/resources/openapi.yaml
 ### 1. Клонирование репозитория
 
 ```bash
-git clone <URL_репозитория>
+git clone <https://github.com/yaaarslv/coffee-machine-api-first.git>
 cd coffee-machine-api-first
 ```
 
