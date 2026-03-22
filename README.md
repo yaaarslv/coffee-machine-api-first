@@ -104,3 +104,6 @@ http://localhost:8080
 http://localhost:8080/swagger-ui/index.html
 ```
 ![img.png](img.png)
+
+### 5. Метрики
+![img_1.png](img_1.png)
