@@ -44,24 +44,24 @@ public class OrderService {
                         if (id != null) {
                             drink = drinkService.getDrinkById(id);
                         } else if (name != null) {
-                            drink = drinkService.getDrinkByName(name);
+                            drink = drinkService.getDrinkByName(name, true);
                         } else {
-                            registry.counter("coffee_order_errors_total", "type", "validation").increment();
+                            registry.counter("coffee_order_errors_total", "type", "recipe_type_not_selected_exception").increment();
                             throw CoffeeException.recipeTypeNotSelectedException();
                         }
 
                         MachineInventory inventory = coffeeMachineService.getInventory(1L);
 
                         if (inventory.getWater() < drink.getWaterAmount()) {
-                            registry.counter("coffee_order_errors_total", "type", "water").increment();
+                            registry.counter("coffee_order_errors_total", "type", "not_enough_water").increment();
                             throw CoffeeException.notEnoughWater(drink.getName(), inventory.getWater(), drink.getWaterAmount());
                         }
                         if (inventory.getCoffee() < drink.getCoffeeAmount()) {
-                            registry.counter("coffee_order_errors_total", "type", "coffee").increment();
+                            registry.counter("coffee_order_errors_total", "type", "not_enough_coffee").increment();
                             throw CoffeeException.notEnoughCoffee(drink.getName(), inventory.getCoffee(), drink.getCoffeeAmount());
                         }
                         if (inventory.getMilk() < drink.getMilkAmount()) {
-                            registry.counter("coffee_order_errors_total", "type", "milk").increment();
+                            registry.counter("coffee_order_errors_total", "type", "not_enough_milk").increment();
                             throw CoffeeException.notEnoughMilk(drink.getName(), inventory.getMilk(), drink.getMilkAmount());
                         }
 
@@ -80,7 +80,7 @@ public class OrderService {
                         return drink;
 
                     } catch (CoffeeException e) {
-                        registry.counter("coffee_order_errors_total", "type", "runtime").increment();
+                        registry.counter("coffee_order_errors_total", "type", "unknown").increment();
                         throw new RuntimeException(e);
                     }
                 });

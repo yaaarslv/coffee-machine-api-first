@@ -1,5 +1,6 @@
 package org.isrpo.services;
 
+import io.micrometer.core.instrument.Gauge;
 import org.isrpo.entities.MachineInventory;
 import org.isrpo.repositories.MachineInventoryRepository;
 import org.isrpo.tools.ConsoleLogger;
@@ -28,8 +29,27 @@ public class CoffeeMachineService {
     public MachineInventory getInventory(Long id) throws CoffeeException {
         ConsoleLogger.log("Получен запрос на получение информации о засапах кофемашины", ConsoleLogger.LogLevel.INFO);
         try {
-            return machineInventoryRepository.findById(id)
+            MachineInventory inventory = machineInventoryRepository.findById(id)
                     .orElseThrow(CoffeeException::coffeeMachineInventoryNotInitializedException);
+
+            if (inventory != null) {
+                Gauge.builder("coffee_inventory_water", machineInventoryRepository,
+                                repo -> repo.findById(1L).map(MachineInventory::getWater).orElse(0L))
+                        .description("Current water level in coffee machine")
+                        .register(registry);
+
+                Gauge.builder("coffee_inventory_coffee", machineInventoryRepository,
+                                repo -> repo.findById(1L).map(MachineInventory::getCoffee).orElse(0L))
+                        .description("Current coffee level in coffee machine")
+                        .register(registry);
+
+                Gauge.builder("coffee_inventory_milk", machineInventoryRepository,
+                                repo -> repo.findById(1L).map(MachineInventory::getMilk).orElse(0L))
+                        .description("Current milk level in coffee machine")
+                        .register(registry);
+            }
+
+            return inventory;
         } catch (CoffeeException e) {
             ConsoleLogger.log("Запасы кофемашины не инициализированы", ConsoleLogger.LogLevel.ERROR);
             throw e;

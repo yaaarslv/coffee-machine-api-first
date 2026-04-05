@@ -56,7 +56,7 @@ public class DrinkService {
             throw CoffeeException.recipeIngredientIsNegativeException();
         }
 
-        Drink existingDrink = getDrinkByName(drink.getName());
+        Drink existingDrink = getDrinkByName(drink.getName(), false);
 
         if (existingDrink != null) {
             throw CoffeeException.recipeTypeAlreadyExistsException();
@@ -131,7 +131,7 @@ public class DrinkService {
                     .orElseThrow(CoffeeException::recipeNotFoundException);
         } catch (CoffeeException e) {
             ConsoleLogger.log("Напиток с id " + id + " не найден.", ConsoleLogger.LogLevel.ERROR);
-            registry.counter("drink_errors_total", "type", "not_found").increment();
+            registry.counter("drink_errors_total", "type", "drink_not_found").increment();
             throw e;
         }
     }
@@ -142,10 +142,15 @@ public class DrinkService {
      * @return drink with selected name
      * @throws CoffeeException if drink wasn't found
      */
-    public Drink getDrinkByName(String name) throws CoffeeException {
+    public Drink getDrinkByName(String name, boolean throwIfNotExists) throws CoffeeException {
         ConsoleLogger.log("Получен запрос на получение напитка с названием: " + name, ConsoleLogger.LogLevel.INFO);
         try {
-            return drinkRepository.findByName(name).orElseThrow(CoffeeException::recipeNotFoundException);
+            if (throwIfNotExists) {
+                return drinkRepository.findByName(name).orElseThrow(CoffeeException::recipeNotFoundException);
+            } else {
+                return drinkRepository.findByName(name).orElse(null);
+            }
+
         } catch (CoffeeException e) {
             ConsoleLogger.log("Напиток с названием " + name + " не найден.", ConsoleLogger.LogLevel.ERROR);
             throw e;
