@@ -60,6 +60,19 @@ services:
     depends_on:
       - loki
 
+  tempo:
+    image: grafana/tempo:2.8.2
+    container_name: coffee-tempo
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./tempo.yml:/etc/tempo.yml
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+
 volumes:
   postgres_data:
   grafana_data:
+  tempo_data:
