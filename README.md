@@ -103,31 +103,31 @@ http://localhost:8080
 ```
 http://localhost:8080/swagger-ui/index.html
 ```
-![img.png](img.png)
+![img.png](static/readme/img.png)
 
 ### 5. Метрики
-![img_1.png](img_1.png)
+![img_1.png](static/readme/img_1.png)
 
 #### Общее количество запросов (RPS)
-![img_2.png](img_2.png)
+![img_2.png](static/readme/img_2.png)
 
 #### Общая HTTP-нагрузка
-![img_3.png](img_3.png)
+![img_3.png](static/readme/img_3.png)
 
 #### Среднее время обработки заказа
-![img_4.png](img_4.png)
+![img_4.png](static/readme/img_4.png)
 
 #### Ошибки заказов по причинам
-![img_5.png](img_5.png)
+![img_5.png](static/readme/img_5.png)
 
 #### Популярность напитков (количество заказов)
-![img_6.png](img_6.png)
+![img_6.png](static/readme/img_6.png)
 
 #### Остаток воды
-![img_7.png](img_7.png)
+![img_7.png](static/readme/img_7.png)
 
 #### Остаток кофе
-![img_8.png](img_8.png)
+![img_8.png](static/readme/img_8.png)
 
 #### Остаток молока
-![img_9.png](img_9.png)
+![img_9.png](static/readme/img_9.png)

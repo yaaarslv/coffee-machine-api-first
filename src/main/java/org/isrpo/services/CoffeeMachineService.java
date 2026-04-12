@@ -27,7 +27,7 @@ public class CoffeeMachineService {
      * @throws CoffeeException if inventory isn't initialized
      */
     public MachineInventory getInventory(Long id) throws CoffeeException {
-        ConsoleLogger.log("Получен запрос на получение информации о засапах кофемашины", ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=get_inventory inventoryId=" + id, ConsoleLogger.LogLevel.INFO);
         try {
             MachineInventory inventory = machineInventoryRepository.findById(id)
                     .orElseThrow(CoffeeException::coffeeMachineInventoryNotInitializedException);
@@ -51,7 +51,7 @@ public class CoffeeMachineService {
 
             return inventory;
         } catch (CoffeeException e) {
-            ConsoleLogger.log("Запасы кофемашины не инициализированы", ConsoleLogger.LogLevel.ERROR);
+            ConsoleLogger.log("ERROR reason=inventory_not_initialized inventoryId=" + id, ConsoleLogger.LogLevel.ERROR);
             throw e;
         }
     }
@@ -63,15 +63,19 @@ public class CoffeeMachineService {
      * @throws CoffeeException if inventory fields are invalid
      */
     public MachineInventory createInventory(MachineInventory inventory) throws CoffeeException {
+        ConsoleLogger.log("BUSINESS action=create_inventory water=" + inventory.getWater() + " coffee=" + inventory.getCoffee() + " milk=" + inventory.getMilk(), ConsoleLogger.LogLevel.INFO);
         if (inventory.getWater() == null || inventory.getCoffee() == null || inventory.getMilk() == null) {
+            ConsoleLogger.log("ERROR reason=inventory_ingredient_null", ConsoleLogger.LogLevel.ERROR);
             throw CoffeeException.recipeIngredientIsNullException();
         }
 
         if (inventory.getWater() < 0 || inventory.getCoffee() < 0 || inventory.getMilk() < 0) {
+            ConsoleLogger.log("ERROR reason=inventory_ingredient_negative water=" + inventory.getWater() + " coffee=" + inventory.getCoffee() + " milk=" + inventory.getMilk(), ConsoleLogger.LogLevel.ERROR);
             throw CoffeeException.recipeIngredientIsNegativeException();
         }
 
         machineInventoryRepository.save(inventory);
+        ConsoleLogger.log("BUSINESS action=inventory_created water=" + inventory.getWater() + " coffee=" + inventory.getCoffee() + " milk=" + inventory.getMilk(), ConsoleLogger.LogLevel.INFO);
         registry.counter("inventory_created_total").increment();
         return inventory;
     }
@@ -84,13 +88,13 @@ public class CoffeeMachineService {
      * @throws CoffeeException if inventory isn't initialized or inventoryDTO field are invalid
      */
     public MachineInventory updateInventory(Long id, MachineInventory newInventory) throws CoffeeException {
-        ConsoleLogger.log("Получен запрос на обновление запаса с id: " + id, ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=update_inventory inventoryId=" + id + " water=" + newInventory.getWater() + " coffee=" + newInventory.getCoffee() + " milk=" + newInventory.getMilk(), ConsoleLogger.LogLevel.INFO);
 
         MachineInventory existingInventory = getInventory(id);
 
         if (newInventory.getWater() != null) {
             if (newInventory.getWater() < 0) {
-                ConsoleLogger.log("Передан ингредиет (вода) с отрицательным значением", ConsoleLogger.LogLevel.ERROR);
+                ConsoleLogger.log("ERROR reason=negative_inventory_value ingredient=water value=" + newInventory.getWater(), ConsoleLogger.LogLevel.ERROR);
                 throw CoffeeException.coffeeMachineIngredientIsNegativeException();
             }
 
@@ -99,7 +103,7 @@ public class CoffeeMachineService {
 
         if (newInventory.getCoffee() != null) {
             if (newInventory.getCoffee() < 0) {
-                ConsoleLogger.log("Передан ингредиет (кофе) с отрицательным значением", ConsoleLogger.LogLevel.ERROR);
+                ConsoleLogger.log("ERROR reason=negative_inventory_value ingredient=coffee value=" + newInventory.getCoffee(), ConsoleLogger.LogLevel.ERROR);
                 throw CoffeeException.coffeeMachineIngredientIsNegativeException();
             }
 
@@ -108,14 +112,14 @@ public class CoffeeMachineService {
 
         if (newInventory.getMilk() != null) {
             if (newInventory.getMilk() < 0) {
-                ConsoleLogger.log("Передан ингредиет (молоко) с отрицательным значением", ConsoleLogger.LogLevel.ERROR);
+                ConsoleLogger.log("ERROR reason=negative_inventory_value ingredient=milk value=" + newInventory.getMilk(), ConsoleLogger.LogLevel.ERROR);
                 throw CoffeeException.coffeeMachineIngredientIsNegativeException();
             }
 
             existingInventory.setMilk(newInventory.getMilk());
         }
 
-        ConsoleLogger.log("Запасы кофемашины обновлены ", ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=inventory_updated inventoryId=" + id + " water=" + existingInventory.getWater() + " coffee=" + existingInventory.getCoffee() + " milk=" + existingInventory.getMilk(), ConsoleLogger.LogLevel.INFO);
         registry.counter("inventory_updates_total").increment();
 
         return machineInventoryRepository.save(existingInventory);
@@ -127,6 +131,7 @@ public class CoffeeMachineService {
      */
     public void updateInventoryAfterOrdering(MachineInventory inventory) {
         machineInventoryRepository.save(inventory);
+        ConsoleLogger.log("BUSINESS action=inventory_updated_after_order water=" + inventory.getWater() + " coffee=" + inventory.getCoffee() + " milk=" + inventory.getMilk(), ConsoleLogger.LogLevel.INFO);
         registry.counter("inventory_updates_total", "type", "order").increment();
     }
 }

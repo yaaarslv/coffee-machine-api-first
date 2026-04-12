@@ -37,7 +37,7 @@ public class OrderService {
                 .register(registry)
                 .record(() -> {
 
-                    ConsoleLogger.log("Получен новый заказ. id = " + id + ", name = " + name, ConsoleLogger.LogLevel.INFO);
+                    ConsoleLogger.log("BUSINESS action=order_drink id=" + id + " name=" + name, ConsoleLogger.LogLevel.INFO);
 
                     try {
                         Drink drink;
@@ -46,6 +46,7 @@ public class OrderService {
                         } else if (name != null) {
                             drink = drinkService.getDrinkByName(name, true);
                         } else {
+                            ConsoleLogger.log("WARN reason=recipe_type_not_selected_exception", ConsoleLogger.LogLevel.WARNING);
                             registry.counter("coffee_order_errors_total", "type", "recipe_type_not_selected_exception").increment();
                             throw CoffeeException.recipeTypeNotSelectedException();
                         }
@@ -53,14 +54,17 @@ public class OrderService {
                         MachineInventory inventory = coffeeMachineService.getInventory(1L);
 
                         if (inventory.getWater() < drink.getWaterAmount()) {
+                            ConsoleLogger.log("WARN reason=not_enough_water drink=" + drink.getName() + " available=" + inventory.getWater() + " required=" + drink.getWaterAmount(), ConsoleLogger.LogLevel.WARNING);
                             registry.counter("coffee_order_errors_total", "type", "not_enough_water").increment();
                             throw CoffeeException.notEnoughWater(drink.getName(), inventory.getWater(), drink.getWaterAmount());
                         }
                         if (inventory.getCoffee() < drink.getCoffeeAmount()) {
+                            ConsoleLogger.log("WARN reason=not_enough_coffee drink=" + drink.getName() + " available=" + inventory.getCoffee() + " required=" + drink.getCoffeeAmount(), ConsoleLogger.LogLevel.WARNING);
                             registry.counter("coffee_order_errors_total", "type", "not_enough_coffee").increment();
                             throw CoffeeException.notEnoughCoffee(drink.getName(), inventory.getCoffee(), drink.getCoffeeAmount());
                         }
                         if (inventory.getMilk() < drink.getMilkAmount()) {
+                            ConsoleLogger.log("WARN reason=not_enough_milk drink=" + drink.getName() + " available=" + inventory.getMilk() + " required=" + drink.getMilkAmount(), ConsoleLogger.LogLevel.WARNING);
                             registry.counter("coffee_order_errors_total", "type", "not_enough_milk").increment();
                             throw CoffeeException.notEnoughMilk(drink.getName(), inventory.getMilk(), drink.getMilkAmount());
                         }
@@ -75,11 +79,12 @@ public class OrderService {
 
                         registry.counter("coffee_orders_total", "drink", drink.getName()).increment();
 
-                        ConsoleLogger.log(drink.getName() + " готов", ConsoleLogger.LogLevel.INFO);
+                        ConsoleLogger.log("BUSINESS action=drink_prepared name=" + drink.getName() + " waterLeft=" + inventory.getWater() + " coffeeLeft=" + inventory.getCoffee() + " milkLeft=" + inventory.getMilk(), ConsoleLogger.LogLevel.INFO);
 
                         return drink;
 
                     } catch (CoffeeException e) {
+                        ConsoleLogger.log("ERROR reason=order_failed exception=" + e.getClass().getSimpleName() + " message=" + e.getMessage(), ConsoleLogger.LogLevel.ERROR);
                         registry.counter("coffee_order_errors_total", "type", "unknown").increment();
                         throw new RuntimeException(e);
                     }

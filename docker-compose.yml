@@ -15,8 +15,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  coffee-app:
+    build: .
+    container_name: coffee-app
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
   prometheus:
     image: prom/prometheus
+    container_name: coffee-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -24,8 +34,32 @@ services:
 
   grafana:
     image: grafana/grafana
+    container_name: coffee-grafana
     ports:
       - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: coffee-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/config.yml
+    command: -config.file=/etc/loki/config.yml
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: coffee-promtail
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
 
 volumes:
   postgres_data:
+  grafana_data:

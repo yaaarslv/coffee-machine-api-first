@@ -24,7 +24,7 @@ public class DrinkStatisticsCleanService {
     @Transactional
     public void cleanupOldStatistics() {
         LocalDateTime cutoffDate = LocalDateTime.now().minusYears(5);
-        ConsoleLogger.log("Статистика старше 5 лет удалена", ConsoleLogger.LogLevel.WARNING);
+        ConsoleLogger.log("BUSINESS action=cleanup_old_statistics cutoffDate=" + cutoffDate, ConsoleLogger.LogLevel.WARNING);
         drinkStatisticsRepository.deleteAllByCreatedAtBefore(cutoffDate);
     }
 }

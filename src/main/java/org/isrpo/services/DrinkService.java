@@ -34,25 +34,25 @@ public class DrinkService {
      * @throws CoffeeException if arguments are invalid or drink with this name already exists
      */
     public Drink createDrink(Drink drink) throws CoffeeException {
-        ConsoleLogger.log("Получен запрос на добавление напитка: " + drink.getName(), ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=create_drink name=" + drink.getName() + " water=" + drink.getWaterAmount() + " coffee=" + drink.getCoffeeAmount() + " milk=" + drink.getMilkAmount(), ConsoleLogger.LogLevel.INFO);
 
         if (drink.getName() == null || drink.getName().isEmpty() || drink.getName().isBlank()) {
-            ConsoleLogger.log("Передано пустое название напитка.", ConsoleLogger.LogLevel.ERROR);
+            ConsoleLogger.log("ERROR reason=drink_name_empty", ConsoleLogger.LogLevel.ERROR);
             throw CoffeeException.recipeNameIsNullException();
         }
 
         if (drink.getWaterAmount() == null || drink.getCoffeeAmount() == null || drink.getMilkAmount() == null) {
-            ConsoleLogger.log("Передан(ы) пустой(ые) необходимый(е) ингредиент(ы)", ConsoleLogger.LogLevel.ERROR);
+            ConsoleLogger.log("ERROR reason=drink_ingredient_null name=" + drink.getName(), ConsoleLogger.LogLevel.ERROR);
             throw CoffeeException.recipeIngredientIsNullException();
         }
 
         if (drink.getWaterAmount() + drink.getCoffeeAmount() + drink.getMilkAmount() == 0) {
-            ConsoleLogger.log("Передан напиток, не требующий ингредиентов", ConsoleLogger.LogLevel.ERROR);
+            ConsoleLogger.log("ERROR reason=drink_all_amounts_zero name=" + drink.getName(), ConsoleLogger.LogLevel.ERROR);
             throw CoffeeException.recipeAmountsAreZeroException();
         }
 
         if (drink.getWaterAmount() < 0 || drink.getCoffeeAmount() < 0 || drink.getMilkAmount() < 0) {
-            ConsoleLogger.log("Передан(ы) ингредиент(ы) с отрицательным значением", ConsoleLogger.LogLevel.ERROR);
+            ConsoleLogger.log("ERROR reason=drink_ingredient_negative name=" + drink.getName() + " water=" + drink.getWaterAmount() + " coffee=" + drink.getCoffeeAmount() + " milk=" + drink.getMilkAmount(), ConsoleLogger.LogLevel.ERROR);
             throw CoffeeException.recipeIngredientIsNegativeException();
         }
 
@@ -65,7 +65,7 @@ public class DrinkService {
         drinkRepository.save(drink);
         registry.counter("drinks_created_total").increment();
 
-        ConsoleLogger.log("Добавлен напиток: " + drink.getName(), ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=drink_created name=" + drink.getName(), ConsoleLogger.LogLevel.INFO);
 
         return drink;
     }
@@ -78,7 +78,7 @@ public class DrinkService {
      * @throws CoffeeException if arguments are invalid or drink with this name doesn't exist
      */
     public Drink updateDrink(Long id, Drink newDrink) throws CoffeeException {
-        ConsoleLogger.log("Получен запрос на обновление напитка с id: " + id, ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=update_drink id=" + id + " name=" + newDrink.getName() + " water=" + newDrink.getWaterAmount() + " coffee=" + newDrink.getCoffeeAmount() + " milk=" + newDrink.getMilkAmount(), ConsoleLogger.LogLevel.INFO);
 
         Drink existingDrink = getDrinkById(id);
 
@@ -88,7 +88,7 @@ public class DrinkService {
 
         if (newDrink.getWaterAmount() != null) {
             if (newDrink.getWaterAmount() < 0) {
-                ConsoleLogger.log("Передан ингредиет (вода) с отрицательным значением", ConsoleLogger.LogLevel.ERROR);
+                ConsoleLogger.log("ERROR reason=drink_ingredient_negative ingredient=water value=" + newDrink.getWaterAmount(), ConsoleLogger.LogLevel.ERROR);
                 throw CoffeeException.recipeIngredientIsNegativeException();
             }
 
@@ -97,7 +97,7 @@ public class DrinkService {
 
         if (newDrink.getCoffeeAmount() != null) {
             if (newDrink.getCoffeeAmount() < 0) {
-                ConsoleLogger.log("Передан ингредиет (кофе) с отрицательным значением", ConsoleLogger.LogLevel.ERROR);
+                ConsoleLogger.log("ERROR reason=drink_ingredient_negative ingredient=coffee value=" + newDrink.getCoffeeAmount(), ConsoleLogger.LogLevel.ERROR);
                 throw CoffeeException.recipeIngredientIsNegativeException();
             }
 
@@ -106,14 +106,14 @@ public class DrinkService {
 
         if (newDrink.getMilkAmount() != null) {
             if (newDrink.getMilkAmount() < 0) {
-                ConsoleLogger.log("Передан ингредиет (молоко) с отрицательным значением", ConsoleLogger.LogLevel.ERROR);
+                ConsoleLogger.log("ERROR reason=drink_ingredient_negative ingredient=milk value=" + newDrink.getMilkAmount(), ConsoleLogger.LogLevel.ERROR);
                 throw CoffeeException.recipeIngredientIsNegativeException();
             }
 
             existingDrink.setMilkAmount(newDrink.getMilkAmount());
         }
 
-        ConsoleLogger.log("Обновлён напиток: " + existingDrink.getName(), ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=drink_updated id=" + id + " name=" + existingDrink.getName(), ConsoleLogger.LogLevel.INFO);
 
         return drinkRepository.save(existingDrink);
     }
@@ -125,12 +125,12 @@ public class DrinkService {
      * @throws CoffeeException if drink wasn't found
      */
     public Drink getDrinkById(Long id) throws CoffeeException {
-        ConsoleLogger.log("Получен запрос на получение напитка с id: " + id, ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=get_drink_by_id id=" + id, ConsoleLogger.LogLevel.INFO);
         try {
             return drinkRepository.findById(id)
                     .orElseThrow(CoffeeException::recipeNotFoundException);
         } catch (CoffeeException e) {
-            ConsoleLogger.log("Напиток с id " + id + " не найден.", ConsoleLogger.LogLevel.ERROR);
+            ConsoleLogger.log("ERROR reason=drink_not_found id=" + id, ConsoleLogger.LogLevel.ERROR);
             registry.counter("drink_errors_total", "type", "drink_not_found").increment();
             throw e;
         }
@@ -143,7 +143,7 @@ public class DrinkService {
      * @throws CoffeeException if drink wasn't found
      */
     public Drink getDrinkByName(String name, boolean throwIfNotExists) throws CoffeeException {
-        ConsoleLogger.log("Получен запрос на получение напитка с названием: " + name, ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=get_drink_by_name name=" + name, ConsoleLogger.LogLevel.INFO);
         try {
             if (throwIfNotExists) {
                 return drinkRepository.findByName(name).orElseThrow(CoffeeException::recipeNotFoundException);
@@ -152,7 +152,7 @@ public class DrinkService {
             }
 
         } catch (CoffeeException e) {
-            ConsoleLogger.log("Напиток с названием " + name + " не найден.", ConsoleLogger.LogLevel.ERROR);
+            ConsoleLogger.log("ERROR reason=drink_not_found name=" + name, ConsoleLogger.LogLevel.ERROR);
             throw e;
         }
     }
@@ -163,10 +163,10 @@ public class DrinkService {
      */
     public List<Drink> getAllDrinks(boolean log) {
         if (log) {
-            ConsoleLogger.log("Получен запрос на получение всех напитков", ConsoleLogger.LogLevel.INFO);
+            ConsoleLogger.log("BUSINESS action=get_all_drinks", ConsoleLogger.LogLevel.INFO);
+            registry.counter("drinks_get_all").increment();
         }
 
-        registry.counter("drinks_get_all").increment();
         return drinkRepository.findAll();
     }
 
@@ -176,11 +176,12 @@ public class DrinkService {
      * @throws CoffeeException if statistic is empty
      */
     public List<Drink> getMostPopularDrinks() throws CoffeeException {
-        ConsoleLogger.log("Получен запрос на получение самого популярного напитка", ConsoleLogger.LogLevel.INFO);
+        ConsoleLogger.log("BUSINESS action=get_most_popular_drinks", ConsoleLogger.LogLevel.INFO);
 
         List<Object[]> results = drinkStatisticsRepository.findDrinkOrdersCount();
 
         if (results.isEmpty()) {
+            ConsoleLogger.log("WARN reason=drink_statistics_empty", ConsoleLogger.LogLevel.WARNING);
             throw CoffeeException.coffeeStatisticIsEmptyException();
         }
 
@@ -199,10 +200,12 @@ public class DrinkService {
      */
     public void addCoffeeStatistics(Drink drink) throws CoffeeException {
         if (drink == null) {
+            ConsoleLogger.log("ERROR reason=drink_is_null_for_statistics", ConsoleLogger.LogLevel.ERROR);
             throw CoffeeException.recipeIsNullException();
         }
 
         DrinkStatistics stats = new DrinkStatistics(drink);
+        ConsoleLogger.log("BUSINESS action=add_drink_statistics name=" + drink.getName(), ConsoleLogger.LogLevel.INFO);
         drinkStatisticsRepository.save(stats);
         registry.counter("drink_orders_statistics_total").increment();
     }
