@@ -55,3 +55,10 @@ management.otlp.metrics.export.enabled=false
 { resource.service.name = "coffee-app" && name =~ ".*machine.*" }
 ```
 ![img_3.png](static/traces/img_3.png)
+
+
+### Трейс с несколькими спанами
+```traceql
+{ resource.service.name = "coffee-app" && span.http.url =~ ".*order.*" }
+```
+![img_5 .png](static/traces/img_5.png)

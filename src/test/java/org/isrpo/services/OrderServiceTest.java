@@ -1,6 +1,7 @@
 package org.isrpo.services;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 import org.isrpo.entities.Drink;
 import org.isrpo.entities.MachineInventory;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +23,7 @@ class OrderServiceTest {
         drinkService = mock(DrinkService.class);
         coffeeMachineService = mock(CoffeeMachineService.class);
         meterRegistry = new SimpleMeterRegistry();
-        orderService = new OrderService(drinkService, coffeeMachineService, meterRegistry);
+        orderService = new OrderService(drinkService, coffeeMachineService, meterRegistry, ObservationRegistry.create());
     }
 
     @Test
