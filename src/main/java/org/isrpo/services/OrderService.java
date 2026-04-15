@@ -48,41 +48,43 @@ public class OrderService {
                             ConsoleLogger.log("BUSINESS action=order_drink id=" + id + " name=" + name, ConsoleLogger.LogLevel.INFO);
 
                             try {
-                                Drink drink = Objects.requireNonNull(
-                                        Observation.createNotStarted("get-drink", observationRegistry)
-                                                .observe(() -> {
-                                                    if (id != null) {
-                                                        try {
-                                                            return drinkService.getDrinkById(id);
-                                                        } catch (CoffeeException e) {
-                                                            throw new RuntimeException(e);
-                                                        }
-                                                    } else if (name != null) {
-                                                        try {
-                                                            return drinkService.getDrinkByName(name, true);
-                                                        } catch (CoffeeException e) {
-                                                            throw new RuntimeException(e);
-                                                        }
-                                                    } else {
-                                                        ConsoleLogger.log("WARN reason=recipe_type_not_selected_exception", ConsoleLogger.LogLevel.WARNING);
-                                                        registry.counter("coffee_order_errors_total", "type", "recipe_type_not_selected_exception").increment();
-                                                        throw new RuntimeException(CoffeeException.recipeTypeNotSelectedException());
-                                                    }
-                                                }),
-                                        "drink must not be null"
-                                );
+                                Drink drink = Observation.createNotStarted("get-drink", observationRegistry)
+                                        .observe(() -> {
+                                            if (id != null) {
+                                                try {
+                                                    return drinkService.getDrinkById(id);
+                                                } catch (CoffeeException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+                                            } else if (name != null) {
+                                                try {
+                                                    return drinkService.getDrinkByName(name, true);
+                                                } catch (CoffeeException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+                                            } else {
+                                                ConsoleLogger.log("WARN reason=recipe_type_not_selected_exception", ConsoleLogger.LogLevel.WARNING);
+                                                registry.counter("coffee_order_errors_total", "type", "recipe_type_not_selected_exception").increment();
+                                                throw new RuntimeException(CoffeeException.recipeTypeNotSelectedException());
+                                            }
+                                        });
 
-                                MachineInventory inventory = Objects.requireNonNull(
-                                        Observation.createNotStarted("get-inventory", observationRegistry)
-                                                .observe(() -> {
-                                                    try {
-                                                        return coffeeMachineService.getInventory(1L);
-                                                    } catch (CoffeeException e) {
-                                                        throw new RuntimeException(e);
-                                                    }
-                                                }),
-                                        "inventory must not be null"
-                                );
+                                if (drink == null) {
+                                    throw new IllegalStateException("Drink must not be null");
+                                }
+
+                                MachineInventory inventory = Observation.createNotStarted("get-inventory", observationRegistry)
+                                        .observe(() -> {
+                                            try {
+                                                return coffeeMachineService.getInventory(1L);
+                                            } catch (CoffeeException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        });
+
+                                if (inventory == null) {
+                                    throw new IllegalStateException("Inventory must not be null");
+                                }
 
                                 Observation.createNotStarted("check-ingredients", observationRegistry)
                                         .observe(() -> {
