@@ -10,6 +10,8 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
+import java.util.Objects;
+
 /**
  * Service for ordering drink
  */
@@ -32,9 +34,9 @@ public class OrderService {
      * @param id identifier of drink to be ordered
      * @param name name of drink to be ordered
      * @return ordered drink
-     * @throws CoffeeException if drink with this is or name doesn't exist or not enough ingredients in coffee machine
+     * @throws RuntimeException if drink with this is or name doesn't exist or not enough ingredients in coffee machine
      */
-    public Drink orderDrink(Long id, String name) throws RuntimeException, CoffeeException {
+    public Drink orderDrink(Long id, String name) throws RuntimeException {
 
         return Timer.builder("coffee_order_duration")
                 .description("Time to process coffee order")
@@ -46,35 +48,41 @@ public class OrderService {
                             ConsoleLogger.log("BUSINESS action=order_drink id=" + id + " name=" + name, ConsoleLogger.LogLevel.INFO);
 
                             try {
-                                Drink drink = Observation.createNotStarted("get-drink", observationRegistry)
-                                        .observe(() -> {
-                                            if (id != null) {
-                                                try {
-                                                    return drinkService.getDrinkById(id);
-                                                } catch (CoffeeException e) {
-                                                    throw new RuntimeException(e);
-                                                }
-                                            } else if (name != null) {
-                                                try {
-                                                    return drinkService.getDrinkByName(name, true);
-                                                } catch (CoffeeException e) {
-                                                    throw new RuntimeException(e);
-                                                }
-                                            } else {
-                                                ConsoleLogger.log("WARN reason=recipe_type_not_selected_exception", ConsoleLogger.LogLevel.WARNING);
-                                                registry.counter("coffee_order_errors_total", "type", "recipe_type_not_selected_exception").increment();
-                                                throw new RuntimeException(CoffeeException.recipeTypeNotSelectedException());
-                                            }
-                                        });
+                                Drink drink = Objects.requireNonNull(
+                                        Observation.createNotStarted("get-drink", observationRegistry)
+                                                .observe(() -> {
+                                                    if (id != null) {
+                                                        try {
+                                                            return drinkService.getDrinkById(id);
+                                                        } catch (CoffeeException e) {
+                                                            throw new RuntimeException(e);
+                                                        }
+                                                    } else if (name != null) {
+                                                        try {
+                                                            return drinkService.getDrinkByName(name, true);
+                                                        } catch (CoffeeException e) {
+                                                            throw new RuntimeException(e);
+                                                        }
+                                                    } else {
+                                                        ConsoleLogger.log("WARN reason=recipe_type_not_selected_exception", ConsoleLogger.LogLevel.WARNING);
+                                                        registry.counter("coffee_order_errors_total", "type", "recipe_type_not_selected_exception").increment();
+                                                        throw new RuntimeException(CoffeeException.recipeTypeNotSelectedException());
+                                                    }
+                                                }),
+                                        "drink must not be null"
+                                );
 
-                                MachineInventory inventory = Observation.createNotStarted("get-inventory", observationRegistry)
-                                        .observe(() -> {
-                                            try {
-                                                return coffeeMachineService.getInventory(1L);
-                                            } catch (CoffeeException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                        });
+                                MachineInventory inventory = Objects.requireNonNull(
+                                        Observation.createNotStarted("get-inventory", observationRegistry)
+                                                .observe(() -> {
+                                                    try {
+                                                        return coffeeMachineService.getInventory(1L);
+                                                    } catch (CoffeeException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                }),
+                                        "inventory must not be null"
+                                );
 
                                 Observation.createNotStarted("check-ingredients", observationRegistry)
                                         .observe(() -> {
